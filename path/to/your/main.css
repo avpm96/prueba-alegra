@@ -1,0 +1,13 @@
+* {
+    box-sizing: border-box; /* Asegura que el padding y el borde no aumenten el ancho total */
+}
+
+.container {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+} 
