@@ -15,6 +15,9 @@
       <p class="modal-content">Vendedor: {{ invoiceData.sellerName }}</p>
       <p class="modal-content">Cantidad de puntos: {{ invoiceData.points }}</p>
       <p class="modal-content">ID del vendedor: {{ invoiceData.sellerId }}</p>
+      <div class="button-container">
+        <button @click="closeModal">Cerrar</button>
+      </div>
     </div>
   </div>
 </template>
@@ -54,7 +57,7 @@ export default {
   align-items: center;
 }
 .modal-container {
-  height: 400px;
+  height: 460px;
   width: 500px;
   display: flex;
   flex-direction: column;
@@ -90,5 +93,23 @@ export default {
   color: black;
   font-size: 18px;
   margin-bottom: 10px;
+}
+.button-container {
+  display: flex;
+  justify-content: center;
+  align-content: center;
+}
+button {
+  width: 50%;
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #0a9e9a;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+button:hover {
+  background-color: #088a87;
 }
 </style>

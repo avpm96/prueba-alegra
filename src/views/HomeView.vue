@@ -28,7 +28,7 @@
         <SellerCard
           v-for="(seller, index) in sellers"
           :key="index"
-          :seller-id="seller.id"
+          :seller-id="Number(seller.id)"
           :image-url="seller.imageUrl"
           :avatar-url="seller.avatarUrl"
           :user-name="seller.name"
@@ -42,7 +42,7 @@
           :imageUrl="seller.image"
           :avatarUrl="seller.avatarUrl"
           :userName="seller.name"
-          :sellerId="seller.id"
+          :sellerId="Number(seller.id)"
           @vote="addVote"
           @dislike="addDislike"
         />
@@ -51,13 +51,23 @@
     <Invoice
       :isVisible="isInvoiceVisible"
       :invoiceData="invoiceData"
-      @close="isInvoiceVisible = false"
+      @close="resetPointsAndGoHome"
     />
     <WinnerModal
       :isVisible="isWinnerModalVisible"
       :sellerName="winnerName"
       :points="winnerPoints"
       @close="isWinnerModalVisible = false"
+    />
+    <AlertModal
+      :isVisible="showAlert"
+      @close="showAlert = false"
+      :paragraph="'Ya has votado en esta búsqueda.'"
+    />
+    <AlertModal
+      :isVisible="showError"
+      @close="showError = false"
+      :paragraph="'No se consiguieron resultados para la búsqueda, intente otra palabra'"
     />
   </div>
 </template>
@@ -70,6 +80,7 @@ import SellerCard from '../components/SellerCard.vue'
 import Header from '../components/Header.vue'
 import Invoice from '../components/Invoice.vue'
 import WinnerModal from '@/components/WinnerModal.vue'
+import AlertModal from '@/components/AlertModal.vue'
 export default {
   components: {
     ImageCard,
@@ -77,6 +88,7 @@ export default {
     Header,
     Invoice,
     WinnerModal,
+    AlertModal,
   },
   data() {
     return {
@@ -91,55 +103,72 @@ export default {
       isWinnerModalVisible: false,
       winnerName: '',
       winnerPoints: '',
+      hasVoted: false,
+      showAlert: false,
+      showError: false,
+      isClose: false,
     }
   },
   methods: {
     async searchImages() {
-      // Guarda una copia de los puntos actuales
       const existingPoints = { ...this.points }
 
-      const images = await fetchImages(this.searchTerm)
-      const sellers = await getSellers()
+      try {
+        const images = await fetchImages(this.searchTerm)
+        const sellers = await getSellers()
 
-      // Asignar imágenes a vendedores
-      this.sellers = sellers.map((seller, index) => ({
-        ...seller,
-        image: images[index % images.length].urls.small,
-      }))
+        this.sellers = sellers.map((seller, index) => ({
+          ...seller,
+          image: images[index % images.length].urls.small,
+        }))
 
-      // Inicializar puntos para cada nuevo vendedor y restaurar puntos existentes
-      this.sellers.forEach((seller) => {
-        this.points[seller.id] = existingPoints[seller.id] || 0
-      })
+        this.sellers.forEach((seller) => {
+          this.points[seller.id] = existingPoints[seller.id] || 0
+        })
 
-      // Cambiar el estado a buscando
-      this.searching = true
+        this.searching = true
+      } catch (error) {
+        this.showError = true
+        this.searching = false
+      }
     },
     resetSearch() {
       this.searchTerm = ''
       this.sellers = []
-      this.searching = false // Restablecer el estado
+      this.searching = false
+      this.hasVoted = false
     },
 
     addVote(sellerId) {
+      if (this.hasVoted) {
+        this.showAlert = true
+        return
+      }
       this.points[sellerId] += 3
-      console.log(`Imagen del vendedor ${sellerId} fue votada. Puntos: ${this.points[sellerId]}`)
 
-      // Verificar si algún vendedor ha ganado
       if (this.points[sellerId] >= 20) {
         this.winnerName = this.sellers.find((seller) => seller.id === sellerId).name
         this.winnerPoints = this.points[sellerId]
+        this.hasVoted = true
         this.isWinnerModalVisible = true
         this.generateInvoice(sellerId)
       }
+      this.hasVoted = true
+      this.votedSellerId = sellerId
     },
+
     addDislike(sellerId) {
+      if (!this.hasVoted || this.votedSellerId !== sellerId) {
+        return
+      }
+      this.hasVoted = false
+      this.votedSellerId = null
       this.points[sellerId] -= 3
       if (this.points[sellerId] < 0) {
         this.points[sellerId] = 0
       }
     },
-    ///
+
     generateInvoice(sellerId) {
       const seller = this.sellers.find((seller) => seller.id === sellerId)
       if (seller) {
@@ -149,7 +178,11 @@ export default {
           sellerId: seller.id,
         }
         this.isInvoiceVisible = true
-        this.handleCreateInvoice(sellerId)
+        // Evitar llamada duplicada si ya se generó la factura
+        if (!this.invoiceGenerated) {
+          this.invoiceGenerated = true
+          this.handleCreateInvoice(sellerId)
+        }
       }
     },
     async handleCreateInvoice(sellerId) {
@@ -161,9 +194,8 @@ export default {
         },
       ]
       const response = await createInvoice({ seller_id: sellerId, items })
-      const client = response.client // Asumiendo que el objeto cliente está en la respuesta
+      const client = response.client
 
-      // Actualizar invoiceData con los datos del cliente
       this.invoiceData = {
         ...this.invoiceData,
         clientId: client.id,
@@ -172,9 +204,19 @@ export default {
         clientPhonePrimary: client.phonePrimary,
       }
       this.invoiceGenerated = true
-      console.log('invoiceData', invoiceData)
+      console.log('invoiceData', this.invoiceData)
     },
-    ///
+    resetPointsAndGoHome() {
+      this.points = {}
+      this.searchTerm = ''
+      this.sellers = []
+      this.searching = false
+      this.isInvoiceVisible = false
+      this.isWinnerModalVisible = false
+      this.hasVoted = false
+      this.showAlert = false
+      this.showError = false
+    },
   },
   watch: {
     points: {
@@ -198,7 +240,7 @@ export default {
   max-width: 1320px;
   display: flex;
   flex-direction: column;
-  align-items: center; /* Centrar horizontalmente */
+  align-items: center;
   text-align: center;
   margin-top: 80px;
   padding-left: 16px;
@@ -207,7 +249,7 @@ export default {
 .content {
   width: 100%; /* Ancho completo */
   /* Ancho máximo para pantallas grandes */
-  padding: 20px; /* Espaciado interno */
+  padding: 10px; /* Espaciado interno */
 }
 .content-title {
   display: flex;
@@ -221,17 +263,17 @@ export default {
   color: #0a9e9a;
 }
 .div-photo {
-  display: flex; /* Usar flexbox para centrar el contenido */
-  justify-content: end; /* Centrar horizontalmente */
-  align-items: center; /* Centrar verticalmente */
-  margin: 0 auto; /* Asegurar que el contenedor esté centrado */
-  width: 100%; /* Asegurar que el contenedor ocupe todo el ancho */
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  margin: 0 auto;
+  width: 100%;
 }
 .photo {
   border-radius: 20px;
-  width: 80%; /* Ajustar el tamaño de la imagen para que ocupe menos espacio */
-  max-width: 600px; /* Limitar el ancho máximo de la imagen */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Sombra para la imagen */
+  width: 80%;
+  max-width: 600px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 .seller-container {
   display: grid;
@@ -247,7 +289,7 @@ export default {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 1rem; /* Opcional, para espacio entre los elementos */
+  gap: 1rem;
 }
 .results-container {
   max-width: 1320px;
@@ -261,8 +303,8 @@ export default {
 .search-container {
   margin: 20px 0;
   display: flex;
-  justify-content: center; /* Cambiado a center para centrar horizontalmente */
-  align-items: center; /* Alinear verticalmente */
+  justify-content: center;
+  align-items: center;
 }
 .text-search {
   font-weight: bold;
@@ -279,50 +321,49 @@ export default {
   color: black;
 }
 .input-container {
-  position: relative; /* Para posicionar el botón dentro del input */
+  position: relative;
 }
 .search-form {
   width: 100%;
   height: 60px;
-  border: 2px solid #ccc; /* Borde del input */
-  border-radius: 35px; /* Bordes redondeados */
-  padding: 10px 20px; /* Espaciado interno */
-  font-size: 18px; /* Tamaño de fuente */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Sombra para el buscador */
-  transition: border-color 0.3s; /* Transición suave */
-  padding-right: 100px; /* Espacio para el botón */
+  border: 2px solid #ccc;
+  border-radius: 35px;
+  padding: 10px 20px;
+  font-size: 18px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: border-color 0.3s;
+  padding-right: 100px;
 }
 .search-form:focus {
-  border-color: #0a9e9a; /* Color del borde al enfocar */
-  outline: none; /* Sin contorno */
+  border-color: #0a9e9a;
+  outline: none;
 }
 .search-button {
   width: 70px;
-  position: absolute; /* Posición absoluta dentro del contenedor */
-  right: 4px; /* Espaciado desde la derecha */
-  top: 75%; /* Centrar verticalmente */
-  transform: translateY(-50%); /* Ajustar para centrar */
-  height: 50px; /* Altura del botón */
-  border: none; /* Sin borde */
-  border-radius: 25px; /* Bordes redondeados */
-  background-color: #0a9e9a; /* Color de fondo */
-  color: white; /* Color del texto */
-
-  font-size: 16px; /* Tamaño de fuente */
-  cursor: pointer; /* Cambiar cursor al pasar */
-  transition: background-color 0.3s; /* Transición suave */
+  position: absolute;
+  right: 4px;
+  top: 75%;
+  transform: translateY(-50%);
+  height: 50px;
+  border: none;
+  border-radius: 25px;
+  background-color: #0a9e9a;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
 .search-button:hover {
-  background-color: #0a9e9a; /* Color al pasar el mouse */
+  background-color: #0a9e9a;
 }
 .search-again-button {
-  background-color: #0a9e9a; /* Color de fondo */
-  color: white; /* Color del texto */
-  border: none; /* Sin borde */
-  border-radius: 5px; /* Bordes redondeados */
-  padding: 10px 20px; /* Espaciado interno */
-  font-size: 18px; /* Tamaño de fuente */
-  cursor: pointer; /* Cambiar cursor al pasar */
+  background-color: #0a9e9a;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  font-size: 18px;
+  cursor: pointer;
   transition: background-color 0.3s; /* Transición suave */
 }
 .search-again-button:hover {
@@ -367,7 +408,7 @@ export default {
   .search-button {
     width: 64px;
     position: absolute;
-    right: 7px;
+    right: 16px;
     top: 83%;
     transform: translateY(-50%);
     height: 35px;
@@ -388,6 +429,11 @@ export default {
 @media (max-width: 480px) {
   .seller-container {
     grid-template-columns: 1fr;
+  }
+  .search-button {
+    width: 64px;
+    position: absolute;
+    right: 7px;
   }
 }
 </style>

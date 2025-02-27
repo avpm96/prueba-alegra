@@ -5,7 +5,7 @@ const ALEGRA_API_BASE_URL = 'https://api.alegra.com/api/v1'
 const ALEGRA_API_SELLERS = `${ALEGRA_API_BASE_URL}/sellers`
 const ALEGRA_API_INVOICES = `${ALEGRA_API_BASE_URL}/invoices`
 const ALEGRA_API_ITEMS = `${ALEGRA_API_BASE_URL}/items/2`
-const client_id = '1'
+//const { USER_EMAIL ,API_TOKEN} = process.env;
 const USER_EMAIL = 'andrea.perezm993@gmail.com'
 const API_TOKEN = 'df3016a678b75167215d'
 
@@ -46,8 +46,8 @@ export const createInvoice = async ({ seller_id, items }) => {
       ALEGRA_API_INVOICES,
       {
         client: { id: 1 },
-        dueDate: '2020-04-05',
-        date: '2020-04-02',
+        dueDate: getDate(),
+        date: getDate(),
         seller: seller_id,
         items,
       },

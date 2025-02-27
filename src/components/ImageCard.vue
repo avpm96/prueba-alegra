@@ -1,12 +1,14 @@
 <template>
   <div class="image-card">
     <div class="avatar">
-      <img src="../assets/images/annie-s.jpg" alt="Avatar" />
+      <img src="../assets/images/avatar.png" alt="Avatar" />
       <p class="text-username">{{ userName }}</p>
     </div>
     <div class="image-container">
       <img :src="imageUrl" alt="Imagen" />
-      <i :class="['fas', 'fa-heart', 'heart-icon', { liked: hasVoted }]" @click="toggleVote"></i>
+      <i :class="['material-icons', 'heart-icon', { liked: hasVoted }]" @click="toggleVote"
+        >favorite</i
+      >
     </div>
   </div>
 </template>
@@ -21,8 +23,8 @@ export default {
   },
   props: {
     imageUrl: String,
-    avatarUrl: String, // Nueva prop para la URL del avatar
-    userName: String, // Nueva prop para el nombre del usuario
+    avatarUrl: String,
+    userName: String,
     sellerId: Number,
   },
   data() {
@@ -88,13 +90,6 @@ export default {
   border-top-right-radius: 0;
   border-end-start-radius: 25px;
   border-end-end-radius: 25px;
-}
-.heartVue svg path {
-  transition: fill 0.3s; /* Transición suave */
-}
-
-.heartVue:hover svg path {
-  fill: red; /* Cambia 'red' al color que prefieras */
 }
 .heart-icon {
   position: absolute;

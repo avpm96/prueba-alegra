@@ -1,8 +1,8 @@
 <template>
   <div class="seller-card">
     <h3 class="seller-title">{{ userName }}</h3>
-    <p class="seller-description">Puntos: {{ points }}</p>
-    <p class="seller-description">Puntos necesarios para ganar: {{ remainingPoints }}</p>
+    <p class="seller-description">Pts: {{ points }}</p>
+    <p class="seller-description">Puntos faltantes para ganar: {{ remainingPoints }}</p>
   </div>
 </template>
 
@@ -26,30 +26,28 @@ export default {
 <style scoped>
 @import '@fortawesome/fontawesome-free/css/all.css';
 .seller-card {
-  border: 1px solid #ddd; /* Borde de la tarjeta */
-  border-radius: 8px; /* Bordes redondeados */
-  padding: 20px; /* Espaciado interno */
-  margin: 10px; /* Espaciado externo */
-  text-align: left; /* Alinear texto a la izquierda */
-  background-color: white; /* Color de fondo */
-  box-shadow: 0 10px 4px rgba(0, 0, 0, 0.1); /* Sombra */
-  transition: box-shadow 0.3s; /* Transición suave para la sombra */
-  width: 100%; /* Asegurarse de que ocupe el 100% del contenedor */
-  box-sizing: border-box; /* Incluir padding y border en el ancho total */
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 10px;
+  text-align: left;
+  background-color: white;
+  box-shadow: 0 10px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s;
+  width: 100%;
+  box-sizing: border-box;
 }
 .seller-card:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra más intensa al pasar el mouse */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .seller-title {
   color: black;
-  font-size: 1.5rem; /* Tamaño de fuente del título */
-  font-weight: bold; /* Negrita */
-  margin: 0 0 10px; /* Margen inferior */
+  font-size: 1.5rem;
+  font-weight: bold;
 }
 .seller-description {
   color: black;
-  font-size: 1rem; /* Tamaño de fuente de la descripción */
-  margin: 0 0 20px;
+  font-size: 1rem;
 }
 </style>
