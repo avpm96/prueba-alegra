@@ -217,6 +217,7 @@ export default {
       this.hasVoted = false
       this.showAlert = false
       this.showError = false
+      this.invoiceGenerated = false
     },
   },
   watch: {
