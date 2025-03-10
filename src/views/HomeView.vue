@@ -172,9 +172,10 @@ export default {
     generateInvoice(sellerId) {
       const seller = this.sellers.find((seller) => seller.id === sellerId)
       if (seller) {
+        const totalPoints = Object.values(this.points).reduce((sum, points) => sum + points, 0)
         this.invoiceData = {
           sellerName: seller.name,
-          points: this.points[sellerId],
+          points: totalPoints,
           sellerId: seller.id,
         }
         this.isInvoiceVisible = true
@@ -185,12 +186,12 @@ export default {
         }
       }
     },
-    async handleCreateInvoice(sellerId) {
+    async handleCreateInvoice(sellerId, totalPoints) {
       const items = [
         {
           id: 2,
           price: 0.0,
-          quantity: this.points[sellerId],
+          quantity: totalPoints,
         },
       ]
       const response = await createInvoice({ seller_id: sellerId, items })
@@ -249,7 +250,7 @@ export default {
 .content {
   width: 100%; /* Ancho completo */
   /* Ancho máximo para pantallas grandes */
-  padding: 10px; /* Espaciado interno */
+  padding: 10px;
 }
 .content-title {
   display: flex;
@@ -277,9 +278,9 @@ export default {
 }
 .seller-container {
   display: grid;
-  /* Por defecto, mostramos 4 columnas en pantallas grandes (opcional) */
+
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px; /* espaciado entre columnas/filas */
+  gap: 20px;
   justify-content: center;
   justify-items: center;
   padding-bottom: 30px;
@@ -393,13 +394,12 @@ export default {
     font-size: 20px;
   }
   .image-gallery {
-    flex-direction: column; /* Las imágenes se apilarán en lugar de estar en fila */
+    flex-direction: column;
   }
   .results-container {
-    /* Cambiamos a columna para que los elementos se apilen */
     flex-direction: column;
     align-items: center;
-    /* Ajustamos también la separación entre elementos para que se vea bien */
+
     justify-content: center;
   }
   .seller-container {
